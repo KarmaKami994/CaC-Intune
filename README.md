@@ -28,7 +28,6 @@ Die **Azure Pipeline** in diesem Projekt führt folgende Hauptaufgaben aus:
 *   **Beendet die Pipeline, falls keine Änderungen vorhanden sind.** [13]
 *   **Sendet eine Benachrichtigung bei Pipeline-Fehlern.** [13]
 
-```mermaid
 graph TD
     A[Intune Konfiguration] -->|Änderung erkannt| B(Azure Pipeline);
     B --> C{IntuneCD installieren};
@@ -43,6 +42,7 @@ graph TD
     K --> L[Pipeline beendet];
     E -- Nein --> M[Pipeline beendet];
     B --> N{Benachrichtigung bei Fehler};
+    
 Vorteile
 •
 Verbesserte Konsistenz und Wiederholbarkeit: Intune-Einstellungen werden konsistent angewendet.
@@ -226,4 +226,4 @@ Um festzulegen, welche Intune-Konfigurationen gesichert werden sollen, bearbeite
 DevOps Pipelines
 Die Verantwortung für die Verwaltung und Überwachung der DevOps-Pipelines liegt beim Workplace-Team. Benachrichtigungen über den Erfolg oder Misserfolg der Pipeline können bei Bedarf an weitere Teammitglieder erweitert werden.
 Fazit
-Dieses Projekt bietet eine automatisierte und zuverlässige Lösung für die Sicherung und Verwaltung Ihrer Microsoft Intune Konfigurationen als Code. Durch die Verwendung von IntuneCD und Azure DevOps Pipelines profitieren Sie von verbesserter Konsistenz, Nachvollziehbarkeit und der Möglichkeit einer schnellen Wiederherstellung im Notfall.
+Dieses Projekt bietet eine automatisierte und zuverlässige Lösung für die Sicherung und Verwaltung Ihrer Microsoft Intune Konfigurationen als Code. Durch die Verwendung von IntuneCD und Azure DevOps Pipelines profitieren Sie von verbesserter Konsistenz, Nachvollziehbarkeit und der Möglichkeit einer schnellen Wiederherstellung im Notfall
