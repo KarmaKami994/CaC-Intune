@@ -48,5 +48,3 @@ Die Autorenerkennung ist **nicht immer 100% genau** (z.B. bei Änderungen kurz n
 ## Anpassen der Datensicherung
 
 Zu sichernde Konfigurationen über den Parameter `--exclude` in der Aufgabe "Create Intune backup" anpassen [19-21].
-
-## Verantwortlichkeiten
