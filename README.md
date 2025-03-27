@@ -1,69 +1,229 @@
-# CaC-Intune
-Configuration as Code for Intune
+# Intune Configuration as Code Automation
 
-# Intune-Konfigurationsautomatisierung
+[![Azure DevOps Build Status](https://img.shields.io/azure-devops/build/your-organization/your-project/your-pipeline-name?style=flat-square)](https://dev.azure.com/your-organization/your-project/_build?definitionId=your-pipeline-id)
+[![GitHub Release](https://img.shields.io/github/v/release/your-username/your-repository?style=flat-square)](https://github.com/your-username/your-repository/releases)
 
-Dieses Projekt automatisiert die Sicherung, Änderungsverfolgung und Dokumentation Ihrer Microsoft Intune-Konfiguration mithilfe einer Azure Pipeline.
+**Dieses Projekt automatisiert die Sicherung und Verwaltung Ihrer Microsoft Intune Konfigurationen mithilfe von Configuration as Code (CaC)-Prinzipien, IntuneCD und Azure DevOps Pipelines.** [1-3]
 
-## Funktionsweise der Azure Pipeline
+## Ausgangslage und Ziel [4-6]
 
-Die Azure Pipeline führt die folgenden Schritte aus [1, 2]:
+Das Fehlen einer automatisierten Datensicherungslösung für Intune birgt im Falle eines Cyberangriffs oder eines Rechenzentrumsausfalls ein erhebliches Risiko für den Verlust aller Konfigurationseinstellungen des digitalen Arbeitsplatzes [6]. **Dieses Projekt implementiert eine umfassende Datensicherungslösung, um dieses Risiko zu minimieren.** [6]
 
-*   **IntuneCD Tool installieren** [1]
-*   **Intune-Konfigurationssicherung in den Ordner `prod-backup` exportieren** [1]
-*   **Erkennung von Konfigurationsänderungen:**
-    *   Wenn eine Änderung erkannt wird [1]
-    *   werden für jede geänderte Datei die Autoren ermittelt [1]
-    *   durchsucht die Pipeline das Intune-Auditprotokoll nach bestimmten `ResourceId`-Änderungen seit dem Datum des letzten Konfigurations-Commits [1, 3]
-    *   werden die geänderten Dateien nach den Autoren gruppiert [1, 3]
-    *   und jede Gruppe separat committet, wobei die Namen der Autoren als Commit-Autoren verwendet werden [1, 4]
-*   **Optionale Generierung von Dokumentation:**
-    *   Erstellung einer Intune-Konfigurationsdokumentationsdatei im Markdown-Format [2] (nur wenn die Aufgabe "Markdown-Dokument generieren & committen" aktiviert ist)
-    *   Erstellung eines Git TAG, wobei die Namen aller Änderungsautoren in die TAG-Beschreibung aufgenommen werden [2, 4]
-    *   Generierung von HTML- und PDF-Dateien aus der Intune-Konfigurationsdokumentationsdatei und Speicherung als Pipeline-Artefakte [2] (nur wenn die entsprechenden Aufgaben aktiviert sind und der Ordner `md2pdf` im Repository-Root vorhanden ist)
-*   **Beendigung der Pipeline**, wenn keine Änderungen vorhanden sind [5]
+## Funktionsweise [7, 8]
 
-## Benachrichtigung bei Pipeline-Fehlern
+Die **Azure Pipeline** in diesem Projekt führt folgende Hauptaufgaben aus:
 
-Es ist eingerichtet, dass **Benachrichtigungen bei Pipeline-Fehlern versendet werden** [5]. Dies kann beispielsweise bei einem abgelaufenen Anwendungsgeheimnis hilfreich sein [5]. Die Einrichtung erfolgt unter `Projekteinstellungen > Benachrichtigungen > Neues Abonnement > Build > Ein Build schlägt fehl` [5].
+*   **Installiert das IntuneCD Tool.** [7]
+*   **Exportiert die aktuelle Intune-Konfiguration in den Ordner `prod-backup`.** [7, 9]
+*   **Überprüft, ob Änderungen in der Konfiguration vorhanden sind.** [7]
+*   **Ermittelt für jede geänderte Datei den/die Autor(en) anhand des Intune-Auditprotokolls seit dem letzten Backup-Commit.** [7, 10]
+    *   Die Ressourcen-ID wird aus dem Dateinamen extrahiert und im Auditprotokoll gesucht. [10]
+    *   Änderungen durch Benutzer und Service Principals werden berücksichtigt. [11]
+*   **Gruppiert die geänderten Dateien nach den jeweiligen Autoren.** [7]
+*   **Erstellt für jede Gruppe separate Commits, wobei der Name des/der Autors/Autoren als Commit-Autor verwendet wird.** [7, 12]
+*   **Erstellt optional eine Intune-Konfigurationsdokumentationsdatei im Markdown-Format.** [8]
+*   **Erstellt einen Git TAG.** [8]
+    *   Die Namen aller Änderungsautoren werden in die TAG-Beschreibung aufgenommen. [8, 12]
+*   **Generiert optional HTML- und PDF-Dateien aus der Markdown-Dokumentation und speichert sie als Pipeline-Artefakte.** [8]
+*   **Beendet die Pipeline, falls keine Änderungen vorhanden sind.** [13]
+*   **Sendet eine Benachrichtigung bei Pipeline-Fehlern.** [13]
 
-## Wiederherstellungsprozess
+```mermaid
+graph TD
+    A[Intune Konfiguration] -->|Änderung erkannt| B(Azure Pipeline);
+    B --> C{IntuneCD installieren};
+    C --> D{Konfiguration exportieren nach prod-backup};
+    D --> E{Änderungen vorhanden?};
+    E -- Ja --> F{Autor ermitteln};
+    F --> G{Dateien nach Autor gruppieren};
+    G --> H{Commits erstellen (Autor als Autor)};
+    H --> I{Git TAG erstellen (mit Autoren)};
+    I --> J{Dokumentation erstellen (optional)};
+    J --> K{Artefakte speichern (optional)};
+    K --> L[Pipeline beendet];
+    E -- Nein --> M[Pipeline beendet];
+    B --> N{Benachrichtigung bei Fehler};
+Vorteile
+•
+Verbesserte Konsistenz und Wiederholbarkeit: Intune-Einstellungen werden konsistent angewendet.
+•
+Vereinfachte Zusammenarbeit: Konfigurationen können einfach geteilt und verwaltet werden.
+•
+Verbesserte Sichtbarkeit und Kontrolle: Änderungen an der Umgebung sind nachvollziehbar.
+•
+Automatisierte Bereitstellung: Schnelle und effiziente Aktualisierung von Richtlinien.
+•
+Reduzierte Fehlerquote: Minimierung menschlicher Fehler durch Automatisierung.
+•
+Schnellere Reaktion auf sich ändernde Anforderungen: Einfache Implementierung neuer Richtlinien.
+•
+Sichere Speicherung der Sicherungen: In Azure Repository.
+•
+Einfache Wiederherstellung im Notfall.
+Voraussetzungen
+•
+Azure DevOps:
+◦
+Ein Projekt mit aktiviertem Azure Repos.
+•
+Azure DevOps Pipeline:
+•
+Azure Active Directory (Azure AD) Workloadidentität (Service Principal):
+◦
+Mit den erforderlichen Graph API Anwendungsberechtigungen:
+▪
+DeviceManagementApps.Read.All
+▪
+DeviceManagementConfiguration.ReadWrite.All
+▪
+DeviceManagementManagedDevices.Read.All
+▪
+DeviceManagementServiceConfig.Read.All
+▪
+Group.Read.All
+▪
+Policy.Read.All
+▪
+Policy.Read.ConditionalAccess
+▪
+DeviceManagementRBAC.Read.All
+Einrichtung
+1.
+Erstellen Sie eine neue Azure DevOps Pipeline.
+2.
+Wählen Sie als Quelle Ihr Repository aus.
+3.
+Wählen Sie die YAML-Vorlage aus diesem Repository.
+4.
+Konfigurieren Sie die Pipeline-Variablen:
+◦
+BACKUP_FOLDER: Der Name des Ordners für die Sicherung (Standard: prod-backup).
+◦
+TENANT_NAME: Die ID Ihres Intune Tenants.
+◦
+SERVICE_CONNECTION_NAME: Der Name Ihrer Azure Service Connection zu Ihrem Azure-Abonnement.
+◦
+USER_EMAIL: Die E-Mail-Adresse für Git-Operationen innerhalb der Pipeline.
+◦
+USER_NAME: Der Name für Git-Operationen innerhalb der Pipeline.
+5.
+Stellen Sie sicher, dass Ihre Azure Service Connection über die oben genannten Graph API Berechtigungen verfügt.
+6.
+Konfigurieren Sie den Trigger für die Pipeline:
+◦
+Ein Zeitplan (z.B. täglich um 1 Uhr).
+◦
+Standardmässig wird die Pipeline nur für Änderungen im main-Branch ausgeführt.
+7.
+Passen Sie optional die Liste der ausgeschlossenen Konfigurationselemente im Schritt "Create Intune backup" an, indem Sie den Parameter --exclude im Skript modifizieren. Standardmässig ausgeschlossen sind CompliancePartnerHeartbeat, ManagedGooglePlay und VPPusedLicenseCount.
+# Beispielausschnitt aus der Azure DevOps Pipeline YAML-Datei
+variables:
+  - name: BACKUP_FOLDER
+    value: prod-backup
+  - name: TENANT_NAME
+    value: your-intune-tenant-id
+  - name: SERVICE_CONNECTION_NAME
+    value: your-azure-service-connection-name
+  - name: USER_EMAIL
+    value: pipeline-user@example.com
+  - name: USER_NAME
+    value: Pipeline User
 
-Grundsätzlich gibt es zwei Möglichkeiten, eine Sicherung wiederherzustellen [6]:
+schedules:
+- cron: "0 1 * * *"
+  displayName: "Tägliche Sicherung um 1 Uhr"
+  branches:
+    include:
+    - main
+  always: true
 
-1.  **Verwendung der IntuneCD-Updatefunktion:**
-    *   Erstellen Sie einen neuen Ordner [6].
-    *   Kopieren Sie nur die Ordnerstruktur mit den wiederherzustellenden JSON-Dateien in diesen Ordner [6].
-    *   Führen Sie `"IntuneCD-startupdate" mit dem Argument "--path "PfadZumBackupOrdner""` aus [6].
-2.  **Manuelles Erstellen der gewünschten Intune-Konfigurationen:**
-    *   Füllen Sie die Werte in den JSON-Dateien Ihres Backups ein [6].
+steps:
+- task: Bash@3
+  displayName: Create Intune backup
+  inputs:
+    targetType: 'inline'
+    script: |
+      mkdir -p "$(Build.SourcesDirectory)/$(BACKUP_FOLDER)"
 
-## Ändern der Datensicherungselemente
+      BACKUP_START=`date +%Y.%m.%d:%H.%M.%S`
+      echo "##vso[task.setVariable variable=BACKUP_START]$BACKUP_START"
 
-Um festzulegen, welche Intune-Konfigurationen gesichert werden sollen, müssen Sie den Abschnitt "**Create Intune backup task**" im Pipeline-Konfigurationscode bearbeiten [6, 7]. Gehen Sie zu `Pipelines > <IhrPipelineName> > Bearbeiten > Suchen Sie nach einer Aufgabe mit dem Namen Create Intune backup` und ändern Sie deren Skript-Abschnitt, indem Sie den Parameter `--exclude` modifizieren [7]. Standardmässig ist `CompliancePartner` ausgeschlossen [7].
-
-## Ermittlung des Änderungsautors
-
-Wenn eine Änderung in einer JSON-Konfigurationsdatei erkannt wird, führt die Pipeline folgende Schritte zur Ermittlung des Autors aus [3, 7]:
-
-1.  Abrufen aller geänderten Dateien [3]
-2.  Abrufen des Datums des letzten Konfigurations-Backup-Commits (`$lastCommitDate`) [3] (falls kein Commit vorhanden ist, wird das gesamte Intune-Auditprotokoll durchsucht [3])
-3.  Für jede geänderte Datei:
-    *   Extrahieren der Ressourcen-ID aus dem Dateinamen [3]
-    *   Suchen dieser ID im Intune-Auditprotokoll (zwischen `$lastCommitDate` und dem Startzeitpunkt des aktuellen Backups) [3]
-    *   Notieren aller Autoren, die dort Änderungen vorgenommen haben [3]
-4.  Gruppieren der geänderten Dateien nach Autoren und Erstellen von Commits [3, 4]
-5.  Verwendung aller gefundenen Autoren im Commit-Namen und als Commit-Autoren für jede Gruppe [4]
-6.  Aufnahme aller gefundenen Autoren in die Git-Tag-Beschreibung [4]
-
-**Wichtiger Hinweis:** Die Liste der ermittelten Autoren ist möglicherweise nicht zu 100 % korrekt [4]. Für absolute Genauigkeit (z. B. bei Sicherheitsvorfällen) wird die Verwendung des Befehls `"Get-MgDeviceManagementAuditEvent"` empfohlen [4].
-
-**Ungenauigkeiten können auftreten, wenn:**
-
-*   Jemand eine Änderung direkt nach dem Start des Backups vornimmt. Die Änderung wird erfasst, der Autor jedoch möglicherweise nicht, da das Auditprotokoll nur bis zum Startzeitpunkt des Backups durchsucht wird [8].
-*   Die Commit-Autoren zeigen lediglich, wer Änderungen an den commiteten Dateien vorgenommen hat (seit dem letzten Commit), nicht wer welche spezifische Änderung vorgenommen hat [9].
-*   Eine Änderung von einer Anwendung vorgenommen wurde. In diesem Fall wird der Name der Anwendung mit dem Suffix `(SP)` als Autorenname verwendet (z. B. `"Modern Workplace Management (SP)"`) [9].
-*   Bestimmte Intune-Konfigurationsänderungen (z. B. an ESP-Profilen) nicht im Intune-Auditprotokoll erfasst werden. In solchen Fällen wird `"unbekannt"` als Autor verwendet [9, 10].
-*   Intune verschiedene ID-Formate verwendet (nicht nur `<GUID>`, sondern z. B. `<GUID>_<GUID>`, `<GUID>_<Zeichenfolge>`, `T_<GUID>`) [10].
-
-
+      IntuneCD-startbackup \
+          -t $(accessToken) \
+          --mode=1 \
+          --output=json \
+          --path="$(Build.SourcesDirectory)/$(BACKUP_FOLDER)" \
+          --exclude CompliancePartnerHeartbeat ManagedGooglePlay VPPusedLicenseCount \
+          --append-id \
+          --ignore-omasettings
+    workingDirectory: '$(Build.SourcesDirectory)'
+    failOnStderr: true
+Nutzung
+Nach der erfolgreichen Einrichtung wird die Azure Pipeline gemäss Ihrem konfigurierten Zeitplan automatisch ausgeführt.
+•
+Bei Änderungen in Ihrer Intune-Konfiguration:
+◦
+Die Pipeline exportiert die aktuellen Einstellungen.
+◦
+Ermittelt die Autoren der Änderungen seit dem letzten Backup.
+◦
+Erstellt separate Git-Commits pro Autor mit den entsprechenden Änderungen.
+◦
+Erstellt einen neuen Git TAG, der das Datum und die Autoren der Änderungen enthält.
+◦
+Optional wird eine Dokumentation der Konfiguration erstellt und als Artefakt gespeichert.
+•
+Ohne Änderungen: Die Pipeline wird beendet, ohne Commits oder Tags zu erstellen.
+Sie können die Historie Ihrer Intune-Konfigurationen im Git-Repository einsehen. Jeder Commit repräsentiert eine Änderung, und der Commit-Autor gibt an, wer diese Änderung vorgenommen hat (sofern im Auditprotokoll gefunden).
+Wiederherstellungsprozess
+Im Falle einer notwendigen Wiederherstellung haben Sie zwei grundlegende Möglichkeiten:
+1.
+Verwendung der IntuneCD-Updatefunktion:
+◦
+Erstellen Sie einen neuen Ordner.
+◦
+Kopieren Sie nur die Ordnerstruktur mit den JSON-Dateien, die Sie wiederherstellen möchten, in diesen Ordner.
+◦
+Führen Sie IntuneCD-startupdate mit dem Argument --path "PfadZumBackupOrdner" aus.
+2.
+Manuelles Erstellen der gewünschten Intune-Konfigurationen:
+◦
+Füllen Sie die Werte in den JSON-Dateien Ihres Backups manuell in Ihrer Intune-Umgebung aus.
+Der Wiederherstellungsprozess mithilfe der Azure DevOps Pipeline umfasst das Wiederherstellen der exportierten Daten aus Azure Repo und das anschliessende Importieren in Intune mithilfe von PowerShell-Cmdlets.
+Wichtig: Die Wiederherstellung einer früheren Intune-Instanz muss gemäss der aktuellen Richtlinien genehmigt werden. Die Umsetzung erfolgt durch einen zuständigen Mitarbeiter.
+Ungenauigkeiten bei der Ermittlung des Änderungsautors
+Bitte beachten Sie, dass die Ermittlung des Änderungsautors nicht immer 100% genau ist.
+•
+Änderungen, die kurz nach dem Start des Backups, aber vor der Protokollabfrage erfolgen, werden möglicherweise nicht dem korrekten Autor zugeordnet.
+•
+Die Liste der Commit-Autoren zeigt, wer Änderungen an den Dateien vorgenommen hat, aber nicht die spezifischen Änderungen jeder Person.
+•
+Änderungen, die von Anwendungen vorgenommen wurden, werden mit dem Namen der Anwendung und dem Suffix "(SP)" gekennzeichnet.
+•
+Bestimmte Intune-Konfigurationsänderungen werden nicht im Intune-Auditprotokoll erfasst (z.B. Änderungen am ESP-Profil). In solchen Fällen wird "unbekannt" als Autor verwendet.
+•
+Intune verwendet verschiedene ID-Formate, was die Identifizierung im Auditprotokoll komplex machen kann.
+Für absolute Genauigkeit (z.B. bei Sicherheitsvorfällen) wird die Verwendung des Befehls Get-MgDeviceManagementAuditEvent empfohlen.
+Ändern der Datensicherungselemente
+Um festzulegen, welche Intune-Konfigurationen gesichert werden sollen, bearbeiten Sie den Abschnitt "Create Intune backup task" in der Pipeline-Konfiguration. Suchen Sie nach der Aufgabe "Create Intune backup" und ändern Sie deren Skript, indem Sie den Parameter --exclude anpassen, um bestimmte Elemente auszuschliessen oder zu entfernen.
+# Beispielausschnitt zum Ändern der ausgeschlossenen Elemente
+- task: Bash@3
+  displayName: Create Intune backup
+  inputs:
+    targetType: 'inline'
+    script: |
+      # ... vorheriger Code ...
+      IntuneCD-startbackup \
+          -t $(accessToken) \
+          --mode=1 \
+          --output=json \
+          --path="$(Build.SourcesDirectory)/$(BACKUP_FOLDER)" \
+          --exclude CompliancePartnerHeartbeat ManagedGooglePlay VPPusedLicenseCount DeviceConfigurations # Zusätzlicher Ausschluss
+          --append-id \
+          --ignore-omasettings
+    workingDirectory: '$(Build.SourcesDirectory)'
+    failOnStderr: true
+DevOps Pipelines
+Die Verantwortung für die Verwaltung und Überwachung der DevOps-Pipelines liegt beim Workplace-Team. Benachrichtigungen über den Erfolg oder Misserfolg der Pipeline können bei Bedarf an weitere Teammitglieder erweitert werden.
+Fazit
+Dieses Projekt bietet eine automatisierte und zuverlässige Lösung für die Sicherung und Verwaltung Ihrer Microsoft Intune Konfigurationen als Code. Durch die Verwendung von IntuneCD und Azure DevOps Pipelines profitieren Sie von verbesserter Konsistenz, Nachvollziehbarkeit und der Möglichkeit einer schnellen Wiederherstellung im Notfall.
